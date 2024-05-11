@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Runtime.InteropServices;
 using Excel2Json_CSharp;
@@ -26,6 +27,8 @@ namespace DGExcel2Json_CSharp
             string[] excelList = GetAllExcel(inExcelPath);
             if (excelList == null) return EDGExcel2JsonResult.EXCEL_NOT_EXIST;
 
+            List<string> fileNames = new List<string>();
+            fileNames.Clear();
             foreach (var file in excelList)
             {
                 currentApp = new Microsoft.Office.Interop.Excel.Application();
@@ -50,7 +53,11 @@ namespace DGExcel2Json_CSharp
                 }
 
                 if (result != EDGExcel2JsonResult.SUCCESS) return result;
+                
+                fileNames.Add(Path.GetFileNameWithoutExtension(file));
             }
+
+            WriteTableLoader(fileNames.ToArray(), outScriptPath);
 
             GC.Collect();
 
@@ -131,7 +138,7 @@ namespace DGExcel2Json_CSharp
                     return EDGExcel2JsonResult.COLUMN_NAME_ERROR;
                 }
 
-                names[currentColumn - startCol] = columnName.ToString();
+                names[currentColumn - startCol] = MakeUpperFirstCharacter(columnName.ToString());
 
                 object valueType = (currentSheet.Cells[startRow + 1, currentColumn] as Range).Value2;
                 if (valueType == null || string.IsNullOrWhiteSpace(valueType.ToString()))
@@ -254,17 +261,25 @@ namespace DGExcel2Json_CSharp
 
         private void WriteCSharpClass(string[] columnNames, string[] valueTypes, string outScriptPath, string className)
         {
+            string rowName = $"{className}Row";
             StreamWriter writer = File.CreateText(outScriptPath);
             writer.WriteLine("// Auto Created by DG Excel2Json.");
             writer.WriteLine();
-            writer.WriteLine($"public class {className}");
+            writer.WriteLine("[System.Serializable]");
+            writer.WriteLine($"public class {rowName} : DGTableData");
             writer.WriteLine("{");
             for (int i = 0; i < columnNames.Length; i++)
             {
+                if (i == 0) continue; // Id 스킵
                 writer.WriteLine($"\tpublic {valueTypes[i]} {columnNames[i]};");
             }
-
+            writer.WriteLine();
+            writer.WriteLine($"\tpublic static {className}Table Table = new {className}Table();");
             writer.Write("}");
+            
+            writer.WriteLine();
+            writer.WriteLine($"public class {className}Table : DGTable<{rowName}> {{ }}");
+            
             writer.Close();
         }
 
@@ -285,6 +300,40 @@ namespace DGExcel2Json_CSharp
                 return false;
             }
             return true;
+        }
+
+        private static EDGExcel2JsonResult WriteTableLoader(string[] tableNames, string outScriptPath)
+        {
+            var loaderName = Path.Combine(outScriptPath, "DGTableLoader.cs");
+            StreamWriter writer = File.CreateText(loaderName);
+            writer.WriteLine("// Auto Created by DG Excel2Json.");
+            writer.WriteLine();
+            writer.WriteLine("using UnityEngine;");
+            writer.WriteLine();
+            writer.WriteLine($"public class DGTableLoader : MonoBehaviour");
+            writer.WriteLine("{");
+            writer.WriteLine("\tpublic string JsonLoadPath = \"Assets/Json\";");
+            writer.WriteLine("\tpublic void LoadAll()");
+            writer.WriteLine("\t{");
+            for (int i = 0; i < tableNames.Length; i++)
+            {
+                writer.WriteLine($"\t\t{tableNames[i]}Row.Table.Load(JsonLoadPath);");
+            }
+            writer.WriteLine("\t}");
+            writer.WriteLine("}");
+            writer.Close();
+
+            return EDGExcel2JsonResult.SUCCESS;
+        }
+
+        private string MakeUpperFirstCharacter(string text)
+        {
+            if (string.IsNullOrEmpty(text)) return null;
+            if (text.Length == 1)
+            {
+                return "{char.ToUpper(text[0])}";
+            }
+            return $"{char.ToUpper(text[0])}{text.Substring(1)}";
         }
     }
 }

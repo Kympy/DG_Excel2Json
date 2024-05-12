@@ -343,9 +343,7 @@ namespace DGExcel2Json_CSharp
             }
             writer.WriteLine("// Auto Created by DG Excel2Json.");
             writer.WriteLine();
-            writer.WriteLine("using UnityEngine;");
-            writer.WriteLine();
-            writer.WriteLine($"public class DGTableLoader : MonoBehaviour");
+            writer.WriteLine($"public class DGTableLoader");
             writer.WriteLine("{");
             writer.WriteLine("\tpublic string JsonLoadPath = \"Assets/Json\";");
             writer.WriteLine("\tpublic void LoadAll()");

@@ -29,6 +29,21 @@ namespace DGExcel2Json_CSharp
 
             List<string> fileNames = new List<string>();
             fileNames.Clear();
+
+            Application activeExcel = null;
+            try
+            {
+                activeExcel = (Application)Marshal.GetActiveObject("Excel.Application");
+            }
+            catch (Exception e)
+            {
+                activeExcel = null;
+            }
+            if (activeExcel != null)
+            {
+                return EDGExcel2JsonResult.EXCEL_IS_RUNNING;
+            }
+            
             foreach (var file in excelList)
             {
                 currentApp = new Microsoft.Office.Interop.Excel.Application();
@@ -39,17 +54,20 @@ namespace DGExcel2Json_CSharp
                 currentApp.Quit();
                 if (currentSheet != null)
                 {
-                    Marshal.ReleaseComObject(currentSheet);
+                    // Marshal.ReleaseComObject(currentSheet);
+                    Marshal.FinalReleaseComObject(currentSheet);
                 }
 
                 if (currentWorkbook != null)
                 {
-                    Marshal.ReleaseComObject(currentWorkbook);
+                    // Marshal.ReleaseComObject(currentWorkbook);
+                    Marshal.FinalReleaseComObject(currentWorkbook);
                 }
 
                 if (currentApp != null)
                 {
-                    Marshal.ReleaseComObject(currentApp);
+                    // Marshal.ReleaseComObject(currentApp);
+                    Marshal.FinalReleaseComObject(currentApp);
                 }
 
                 if (result != EDGExcel2JsonResult.SUCCESS) return result;
@@ -57,10 +75,14 @@ namespace DGExcel2Json_CSharp
                 fileNames.Add(Path.GetFileNameWithoutExtension(file));
             }
 
-            WriteTableLoader(fileNames.ToArray(), outScriptPath);
+            EDGExcel2JsonResult loaderResult = WriteTableLoader(fileNames.ToArray(), outScriptPath);
+            if (loaderResult != EDGExcel2JsonResult.SUCCESS)
+            {
+                GC.Collect();
+                return loaderResult;
+            }
 
             GC.Collect();
-
             return EDGExcel2JsonResult.SUCCESS;
         }
 
@@ -153,6 +175,7 @@ namespace DGExcel2Json_CSharp
             // 데이터 수집
             for (int curCol = startCol; curCol <= endCol; curCol++)
             {
+                if (names[curCol - startCol].Contains(IgnoreColumn)) continue;
                 for (int curRow = startRow + 2; curRow <= endRow; curRow++)
                 {
                     var read = (currentSheet.Cells[curRow, curCol] as Range).Value2;
@@ -178,6 +201,7 @@ namespace DGExcel2Json_CSharp
             return EDGExcel2JsonResult.SUCCESS;
         }
 
+        private static string IgnoreColumn = "#";
         private EDGExcel2JsonResult WriteJson(string[] columnNames, string[] valueTypes, string[,] datas, string fileFullName)
         {
             StreamWriter writer = File.CreateText(fileFullName);
@@ -188,6 +212,7 @@ namespace DGExcel2Json_CSharp
                 writer.WriteLine("\t{");
                 for (int i = 0; i < columnNames.Length; i++)
                 {
+                    if (columnNames[i].Contains(IgnoreColumn)) continue;
                     writer.Write($"\t\t\"{columnNames[i]}\": ");
                     EDataType dataType = GetDataType(valueTypes[i]);
                     switch (dataType)
@@ -215,12 +240,12 @@ namespace DGExcel2Json_CSharp
                             return EDGExcel2JsonResult.DATA_TYPE_NOT_DEFINED;
                     }
 
-                    // 마지막 열이거나 배열이면 , 생략
-                    if (i == columnNames.Length - 1 || IsArrayType(dataType))
+                    // 마지막 열임
+                    if (i == columnNames.Length - 1)
                     {
                         writer.WriteLine();
                     }
-                    else // 마지막 열이 아니고 배열이 아닐 때
+                    else // 마지막 열이 아님
                     {
                         writer.WriteLine(",");
                     }
@@ -271,6 +296,7 @@ namespace DGExcel2Json_CSharp
             for (int i = 0; i < columnNames.Length; i++)
             {
                 if (i == 0) continue; // Id 스킵
+                if (columnNames[i].Contains(IgnoreColumn)) continue;
                 writer.WriteLine($"\tpublic {valueTypes[i]} {columnNames[i]};");
             }
             writer.WriteLine();
@@ -305,7 +331,16 @@ namespace DGExcel2Json_CSharp
         private static EDGExcel2JsonResult WriteTableLoader(string[] tableNames, string outScriptPath)
         {
             var loaderName = Path.Combine(outScriptPath, "DGTableLoader.cs");
-            StreamWriter writer = File.CreateText(loaderName);
+            StreamWriter writer = null;
+            try
+            {
+                writer = File.CreateText(loaderName);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                return EDGExcel2JsonResult.FILE_WRITE_ACCESS_DENIED;
+            }
             writer.WriteLine("// Auto Created by DG Excel2Json.");
             writer.WriteLine();
             writer.WriteLine("using UnityEngine;");

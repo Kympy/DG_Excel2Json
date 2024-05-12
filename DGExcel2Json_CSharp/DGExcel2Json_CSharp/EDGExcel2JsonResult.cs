@@ -15,5 +15,7 @@
         COLUMN_NAME_ERROR = 10,
         TYPE_NAME_ERROR = 11,
         DATA_READ_ERROR = 12,
+        FILE_WRITE_ACCESS_DENIED = 13,
+        EXCEL_IS_RUNNING = 14,
     }
 }

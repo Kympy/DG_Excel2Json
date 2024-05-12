@@ -1,4 +1,5 @@
 
+using System;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
@@ -10,39 +11,37 @@ public class DGTableData
     public int Id;
 }
 
-public class DGTable<T> where T : DGTableData
+public class DGTable<V> : Dictionary<int, V> where V : DGTableData
 {
-    private readonly Dictionary<int, T> copiedData = new();
-
-    public T Get(int id)
+    public V Get(int id)
     {
-        if (copiedData.ContainsKey(id) == false) return null;
-        return copiedData[id];
+        if (ContainsKey(id) == false) return null;
+        return this[id];
     }
 
     public void Load(string path)
     {
-        string jsonName = typeof(T).ToString();
+        string jsonName = typeof(V).ToString();
         jsonName = jsonName.Substring(0, jsonName.Length - 3); // R, O, W
         var handle = Addressables.LoadAssetAsync<TextAsset>($"{path}/{jsonName}.json");
         handle.WaitForCompletion();
         TextAsset text = handle.Result;
         if (text == null) throw new FileLoadException();
         var items = FromJson($"{{\"Items\":{text.text}}}");
-        copiedData.Clear();
+        this.Clear();
         for (int i = 0; i < items.Length; i++)
         {
-            copiedData.Add(items[i].Id, items[i]);
+            this.Add(items[i].Id, items[i]);
         }
     }
 
     [System.Serializable]
     public class Wrapper
     {
-        public T[] Items;
+        public V[] Items;
     }
 
-    private T[] FromJson(string textData)
+    private V[] FromJson(string textData)
     {
         return JsonUtility.FromJson<Wrapper>(textData).Items;
     }

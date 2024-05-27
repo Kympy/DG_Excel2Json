@@ -19,7 +19,7 @@ namespace DGExcel2Json_CSharp
             }
 
             Excel2Json excel2Json = new Excel2Json();
-            return (int)excel2Json.CreateJson(args[0], args[1], args[2]);
+            return (int)excel2Json.CreateJson(args[0], args[1], args[2], args[3]);
         }
     }
 }

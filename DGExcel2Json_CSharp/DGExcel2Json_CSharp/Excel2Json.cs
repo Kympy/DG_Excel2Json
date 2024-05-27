@@ -13,7 +13,7 @@ namespace DGExcel2Json_CSharp
         private Workbook currentWorkbook;
         private Worksheet currentSheet;
 
-        public EDGExcel2JsonResult CreateJson(string inExcelPath, string outJsonPath, string outScriptPath)
+        public EDGExcel2JsonResult CreateJson(string inExcelPath, string outJsonPath, string outScriptPath, string loaderPath)
         {
             if (string.IsNullOrEmpty(inExcelPath))
             {
@@ -21,7 +21,7 @@ namespace DGExcel2Json_CSharp
                 return EDGExcel2JsonResult.EXCEL_PATH_WRONG;
             }
             
-            bool pathCheck = CreateDirectoryIfNotExist(outJsonPath) && CreateDirectoryIfNotExist(outScriptPath);
+            bool pathCheck = CreateDirectoryIfNotExist(outJsonPath) && CreateDirectoryIfNotExist(outScriptPath) && CreateDirectoryIfNotExist(loaderPath);
             if (pathCheck == false) return EDGExcel2JsonResult.SAVE_PATH_WRONG;
 
             string[] excelList = GetAllExcel(inExcelPath);
@@ -75,7 +75,7 @@ namespace DGExcel2Json_CSharp
                 fileNames.Add(Path.GetFileNameWithoutExtension(file));
             }
 
-            EDGExcel2JsonResult loaderResult = WriteTableLoader(fileNames.ToArray(), outScriptPath);
+            EDGExcel2JsonResult loaderResult = WriteTableLoader(fileNames.ToArray(), loaderPath);
             if (loaderResult != EDGExcel2JsonResult.SUCCESS)
             {
                 GC.Collect();
@@ -108,6 +108,10 @@ namespace DGExcel2Json_CSharp
             return excelList;
         }
 
+        private const string color = "Color";
+        private const string colorArr = "Color[]";
+        private const string colorLower = "color";
+        private const string colorArrLower = "color[]";
         private EDGExcel2JsonResult MakeJsonFile(string inExcelFile, string outJsonPath, string outScriptPath)
         {
             int startRow = -1;
@@ -169,7 +173,15 @@ namespace DGExcel2Json_CSharp
                     return EDGExcel2JsonResult.TYPE_NAME_ERROR;
                 }
 
-                types[currentColumn - startCol] = valueType.ToString();
+                string typeString = valueType.ToString();
+                switch (typeString.ToLower())
+                {
+                    default:
+                    {
+                        types[currentColumn - startCol] = valueType.ToString();
+                        break;
+                    }
+                }
             }
 
             // 데이터 수집
@@ -302,7 +314,26 @@ namespace DGExcel2Json_CSharp
             {
                 if (i == 0) continue; // Id 스킵
                 if (columnNames[i].Contains(IgnoreColumn)) continue;
-                writer.WriteLine($"\tpublic {valueTypes[i]} {columnNames[i]};");
+
+                bool isColor = string.Compare(valueTypes[i].ToLower(), colorLower) == 0;
+                bool isColorArr = string.Compare(valueTypes[i].ToLower(), colorArrLower) == 0; 
+                if (isColor)
+                {   
+                    writer.WriteLine($"\tpublic float[] {columnNames[i]};");
+                    writer.WriteLine($"\tpublic {color} Get{columnNames[i]} {{ get {{ return new Color({columnNames[i]}[0], {columnNames[i]}[1], {columnNames[i]}[2]); }} }}");
+                }
+                else if (isColorArr)
+                {
+                    writer.WriteLine($"\tpublic float[][] {columnNames[i]};");
+                    writer.WriteLine($"\tpublic {colorArr} Get{columnNames[i]}(int index)\n");
+                    writer.WriteLine($"\t{{");
+                    writer.WriteLine($"\t\treturn new Color({columnNames[i]}[0][index], {columnNames[i]}[1][index], {columnNames[i]}[2][index]);");
+                    writer.WriteLine($"\t}}");
+                }
+                else
+                {
+                    writer.WriteLine($"\tpublic {valueTypes[i]} {columnNames[i]};");
+                }
             }
             writer.WriteLine();
             writer.WriteLine($"\tpublic static {className}Table Table = new {className}Table();");
@@ -333,9 +364,9 @@ namespace DGExcel2Json_CSharp
             return true;
         }
 
-        private static EDGExcel2JsonResult WriteTableLoader(string[] tableNames, string outScriptPath)
+        private static EDGExcel2JsonResult WriteTableLoader(string[] tableNames, string outLoaderPath)
         {
-            var loaderName = Path.Combine(outScriptPath, "DGTableLoader.cs");
+            var loaderName = Path.Combine(outLoaderPath, "DGTableLoader.cs");
             StreamWriter writer = null;
             try
             {

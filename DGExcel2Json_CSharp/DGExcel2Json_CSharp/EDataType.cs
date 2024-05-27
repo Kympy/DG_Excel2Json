@@ -7,11 +7,13 @@
         Bool,
         String,
         Vector3,
+        Color,
         
         IntArray,
         FloatArray,
         BoolArray,
         StringArray,
+        ColorArray,
         
         NOT_DEFINED,
     }

@@ -226,10 +226,10 @@ namespace DGExcel2Json_CSharp
                             writer.Write($"\"{datas[j, i]}\"");
                             break;
                         case EDataType.Vector3:
-                            writer.Write(datas[j, i]);
-                            break;
+                        case EDataType.Color:
                         case EDataType.IntArray:
                         case EDataType.FloatArray:
+                        case EDataType.ColorArray:
                             writer.Write("[");
                             writer.Write(datas[j, i]);
                             writer.Write("]");
@@ -278,6 +278,9 @@ namespace DGExcel2Json_CSharp
                 case "vector3": return EDataType.Vector3;
                 case "int[]": return EDataType.IntArray;
                 case "float[]": return EDataType.FloatArray;
+                case "color" : return EDataType.Color;
+                case "color[]" : return EDataType.ColorArray;
+                
                 default: return EDataType.NOT_DEFINED;
             }
         }
@@ -289,6 +292,8 @@ namespace DGExcel2Json_CSharp
             string rowName = $"{className}Row";
             StreamWriter writer = File.CreateText(outScriptPath);
             writer.WriteLine("// Auto Created by DG Excel2Json.");
+            writer.WriteLine();
+            writer.WriteLine("using UnityEngine;");
             writer.WriteLine();
             writer.WriteLine("[System.Serializable]");
             writer.WriteLine($"public class {rowName} : DGTableData");

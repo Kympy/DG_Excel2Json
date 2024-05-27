@@ -2,8 +2,10 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using UnityEngine;
 using UnityEngine.AddressableAssets;
+using Random = UnityEngine.Random;
 
 [System.Serializable]
 public class DGTableData
@@ -17,6 +19,13 @@ public class DGTable<V> : Dictionary<int, V> where V : DGTableData
     {
         if (ContainsKey(id) == false) return null;
         return this[id];
+    }
+
+    public V GetRandom()
+    {
+        var arr = Keys.ToArray();
+        int randomKeyIndex = Random.Range(0, arr.Length);
+        return this[arr[randomKeyIndex]];
     }
 
     public void Load(string path)

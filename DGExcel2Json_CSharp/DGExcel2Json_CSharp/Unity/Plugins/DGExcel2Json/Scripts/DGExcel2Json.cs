@@ -9,7 +9,9 @@ namespace DGExcel2Json
 {
     public class DGExcel2Json : MonoBehaviour
     {
-        private static string ROOTFOLDER = "DGExcel2Json";
+        private static string Plugins = "Plugins";
+        private static string Root = "DGExcel2Json";
+        private static string RunFolder = "Build";
         private static string FILE = "DGExcel2Json_CSharp.exe";
 
         [MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
@@ -26,8 +28,7 @@ namespace DGExcel2Json
 
         public static void Generate(bool bRecompile = false)
         {
-            string projectPath = Path.GetDirectoryName(Application.dataPath);
-            string rootDir = Path.Combine(projectPath, ROOTFOLDER);
+            string rootDir = Path.Combine(Application.dataPath, Plugins, Root, RunFolder);
             if (Directory.Exists(rootDir) == false)
             {
                 Directory.CreateDirectory(rootDir);
@@ -36,7 +37,7 @@ namespace DGExcel2Json
             string fullPath = Path.Combine(rootDir, FILE);
             if (File.Exists(fullPath) == false)
             {
-                Debug.LogError($"EXE file is not exist in {projectPath}. {FILE}");
+                Debug.LogError($"EXE file is not exist in {rootDir}. {FILE}");
                 return;
             }
 
@@ -44,7 +45,7 @@ namespace DGExcel2Json
             startInfo.FileName = fullPath;
             startInfo.UseShellExecute = false;
             startInfo.CreateNoWindow = true;
-            startInfo.Arguments = $"{CreateExcelFolder()} {CreateJsonFolder()} {CreateScriptFolder()}";
+            startInfo.Arguments = $"{CreateExcelFolder()} {CreateJsonFolder()} {CreateScriptFolder()} {CreateLoaderPath()}";
 
             try
             {
@@ -106,6 +107,17 @@ namespace DGExcel2Json
             }
 
             return classPath;
+        }
+
+        public static string CreateLoaderPath()
+        {
+            string loaderPath = Path.Combine(Application.dataPath, "Scripts/DGFramework/TableLoader");
+            if (Directory.Exists(loaderPath) == false)
+            {
+                Directory.CreateDirectory(loaderPath);
+            }
+
+            return loaderPath;
         }
 
         [MenuItem("Tools/DGExcel2Json/Recompile", priority = 3)]

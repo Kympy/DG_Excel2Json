@@ -9,26 +9,20 @@ namespace DGExcel2Json
 {
     public class DGExcel2Json : MonoBehaviour
     {
+#if UNITY_EDITOR
         private static string Plugins = "Plugins";
         private static string Root = "DGExcel2Json";
-        private static string RunFolder = "Build";
         private static string FILE = "DGExcel2Json_CSharp.exe";
 
         [MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
-        public static void GenerateRecompile()
-        {
-            Generate(true);
-        }
+        public static void GenerateRecompile() { Generate(true); }
 
         [MenuItem("Tools/DGExcel2Json/Generate Only", priority = 2)]
-        public static void GenerateNoCompile()
-        {
-            Generate(false);
-        }
+        public static void GenerateNoCompile() { Generate(false); }
 
         public static void Generate(bool bRecompile = false)
         {
-            string rootDir = Path.Combine(Application.dataPath, Plugins, Root, RunFolder);
+            string rootDir = Path.Combine(Application.dataPath, Plugins, Root);
             if (Directory.Exists(rootDir) == false)
             {
                 Directory.CreateDirectory(rootDir);
@@ -61,8 +55,8 @@ namespace DGExcel2Json
                     {
                         Debug.Log($"DG Excel2Json finished : Exit Code -> {exitCode}:{(EDGExcel2JsonResult)exitCode}");
                     }
-                    if (bRecompile)
-                        ReCompile();
+
+                    if (bRecompile) ReCompile();
                 }
             }
             catch (Exception e)
@@ -121,9 +115,7 @@ namespace DGExcel2Json
         }
 
         [MenuItem("Tools/DGExcel2Json/Recompile", priority = 3)]
-        public static void ReCompile()
-        {
-            UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
-        }
+        public static void ReCompile() { UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation(); }
+#endif
     }
 }

@@ -208,7 +208,7 @@ namespace DGExcel2Json_CSharp
             EDGExcel2JsonResult jsonResult = WriteJson(names, types, datas, fileFullName);
             if (jsonResult != EDGExcel2JsonResult.SUCCESS) return jsonResult;
 
-            string classFullName = Path.Combine(outScriptPath, $"{fileName}.cs");
+            string classFullName = Path.Combine(outScriptPath, $"{fileName}Row.cs");
             WriteCSharpClass(names, types, classFullName, fileName);
             return EDGExcel2JsonResult.SUCCESS;
         }

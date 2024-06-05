@@ -55,7 +55,7 @@ namespace DGExcel2Json
                     {
                         Debug.Log($"DG Excel2Json finished : Exit Code -> {exitCode}:{(EDGExcel2JsonResult)exitCode}");
                     }
-
+                    AssetDatabase.ImportAsset(CreateJsonFolder(), ImportAssetOptions.ImportRecursive);
                     if (bRecompile) ReCompile();
                 }
             }

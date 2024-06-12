@@ -14,7 +14,7 @@ namespace DGExcel2Json
         private static string Root = "DGExcel2Json";
         private static string FILE = "DGExcel2Json_CSharp.exe";
 
-        [MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
+        //[MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
         public static void GenerateRecompile() { Generate(true); }
 
         [MenuItem("Tools/DGExcel2Json/Generate Only", priority = 2)]
@@ -55,7 +55,8 @@ namespace DGExcel2Json
                     {
                         Debug.Log($"DG Excel2Json finished : Exit Code -> {exitCode}:{(EDGExcel2JsonResult)exitCode}");
                     }
-                    AssetDatabase.ImportAsset(CreateJsonFolder(), ImportAssetOptions.ImportRecursive);
+
+                    AssetDatabase.ImportAsset(GetJsonRelativePath(), ImportAssetOptions.ImportRecursive);
                     if (bRecompile) ReCompile();
                 }
             }
@@ -79,7 +80,7 @@ namespace DGExcel2Json
             return excelPath;
         }
 
-        [MenuItem("Tools/DGExcel2Json/Create json folder")]
+        //[MenuItem("Tools/DGExcel2Json/Create json folder")]
         public static string CreateJsonFolder()
         {
             string jsonPath = Path.Combine(Application.dataPath, "Json");
@@ -91,7 +92,12 @@ namespace DGExcel2Json
             return jsonPath;
         }
 
-        [MenuItem("Tools/DGExcel2Json/Create class script folder")]
+        private static string GetJsonRelativePath()
+        {
+            return "Assets/Json";
+        }
+        
+        //[MenuItem("Tools/DGExcel2Json/Create class script folder")]
         public static string CreateScriptFolder()
         {
             string classPath = Path.Combine(Application.dataPath, "Scripts/DataClass");

@@ -13,7 +13,7 @@ namespace DGExcel2Json_CSharp
         private Workbook currentWorkbook;
         private Worksheet currentSheet;
 
-        public EDGExcel2JsonResult CreateJson(string inExcelPath, string outJsonPath, string outScriptPath, string loaderPath)
+        public EDGExcel2JsonResult CreateAll(string inExcelPath, string outJsonPath, string outScriptPath, string loaderPath)
         {
             if (string.IsNullOrEmpty(inExcelPath))
             {
@@ -86,6 +86,69 @@ namespace DGExcel2Json_CSharp
             return EDGExcel2JsonResult.SUCCESS;
         }
 
+        public EDGExcel2JsonResult CreateJsonOnly(string inExcelPath, string outJsonPath)
+        {
+            if (string.IsNullOrEmpty(inExcelPath))
+            {
+                Console.WriteLine("Excel path is not valid.");
+                return EDGExcel2JsonResult.EXCEL_PATH_WRONG;
+            }
+            
+            bool pathCheck = CreateDirectoryIfNotExist(outJsonPath);
+            if (pathCheck == false) return EDGExcel2JsonResult.SAVE_PATH_WRONG;
+
+            string[] excelList = GetAllExcel(inExcelPath);
+            if (excelList == null) return EDGExcel2JsonResult.EXCEL_NOT_EXIST;
+
+            List<string> fileNames = new List<string>();
+            fileNames.Clear();
+
+            Application activeExcel = null;
+            try
+            {
+                activeExcel = (Application)Marshal.GetActiveObject("Excel.Application");
+            }
+            catch (Exception e)
+            {
+                activeExcel = null;
+            }
+            if (activeExcel != null)
+            {
+                return EDGExcel2JsonResult.EXCEL_IS_RUNNING;
+            }
+            
+            foreach (var file in excelList)
+            {
+                currentApp = new Microsoft.Office.Interop.Excel.Application();
+                currentWorkbook = currentApp.Workbooks.Open(file);
+                currentSheet = currentWorkbook.Worksheets.Item[1] as Worksheet;
+                EDGExcel2JsonResult result = MakeJsonFile(file, outJsonPath, null);
+                currentWorkbook.Close();
+                currentApp.Quit();
+                if (currentSheet != null)
+                {
+                    Marshal.FinalReleaseComObject(currentSheet);
+                }
+
+                if (currentWorkbook != null)
+                {
+                    Marshal.FinalReleaseComObject(currentWorkbook);
+                }
+
+                if (currentApp != null)
+                {
+                    Marshal.FinalReleaseComObject(currentApp);
+                }
+
+                if (result != EDGExcel2JsonResult.SUCCESS) return result;
+                
+                fileNames.Add(Path.GetFileNameWithoutExtension(file));
+            }
+
+            GC.Collect();
+            return EDGExcel2JsonResult.SUCCESS;
+        }
+
         private string searchPattern = "*.xlsx";
 
         private string[] GetAllExcel(string inExcelPath)
@@ -112,7 +175,7 @@ namespace DGExcel2Json_CSharp
         private const string colorArr = "Color[]";
         private const string colorLower = "color";
         private const string colorArrLower = "color[]";
-        private EDGExcel2JsonResult MakeJsonFile(string inExcelFile, string outJsonPath, string outScriptPath)
+        private EDGExcel2JsonResult MakeJsonFile(string inExcelFile, string outJsonPath, string outScriptPath = null)
         {
             int startRow = -1;
             int startCol = 1;
@@ -208,8 +271,11 @@ namespace DGExcel2Json_CSharp
             EDGExcel2JsonResult jsonResult = WriteJson(names, types, datas, fileFullName);
             if (jsonResult != EDGExcel2JsonResult.SUCCESS) return jsonResult;
 
-            string classFullName = Path.Combine(outScriptPath, $"{fileName}Row.cs");
-            WriteCSharpClass(names, types, classFullName, fileName);
+            if (string.IsNullOrEmpty(outScriptPath) == false)
+            {
+                string classFullName = Path.Combine(outScriptPath, $"{fileName}Row.cs");
+                WriteCSharpClass(names, types, classFullName, fileName);
+            }
             return EDGExcel2JsonResult.SUCCESS;
         }
 

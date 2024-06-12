@@ -4,7 +4,7 @@
     {
         SUCCESS = 0,
         EXECUTE_ARGUMENT_REQUIRED = 1,
-        EXECUTE_ARGUMENT_LENGTH = 2,
+        FAILED = 2,
         DATA_TYPE_NOT_DEFINED = 3,
         EXCEL_NOT_EXIST = 4,
         EXCEL_PATH_WRONG = 5,
@@ -17,5 +17,8 @@
         DATA_READ_ERROR = 12,
         FILE_WRITE_ACCESS_DENIED = 13,
         EXCEL_IS_RUNNING = 14,
+        ARGUMENT_COUNT_ERROR_1 = 15,
+        ARGUMENT_COUNT_ERROR_3 = 16,
+        ARGUMENT_COUNT_ERROR_MORE = 17,
     }
 }

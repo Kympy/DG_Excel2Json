@@ -1,6 +1,6 @@
 # Install
 
-## C# Unity
+## C# Unity Execute
 
 - KOR
   + Unity 폴더의 Plugins 폴더를 프로젝트 Plugins 폴더에 복사한다.
@@ -9,7 +9,7 @@
   + Copy all 'Plugins' folder in 'Unity' folder to your project 'Plugins' folder.
   + After run editor, turn off all checkbox of dll files.
 
-## C# exe only
+## C# exe Execute (Json Only)
 
 - KOR
   + 빌드된 exe 파일을 실행하고 설명에 맞게 인자들을 입력한다.

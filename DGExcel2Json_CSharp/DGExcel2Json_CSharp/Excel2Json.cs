@@ -402,7 +402,7 @@ namespace DGExcel2Json_CSharp
                 }
             }
             writer.WriteLine();
-            writer.WriteLine($"\tpublic static {className}Table Table = new {className}Table();");
+            writer.WriteLine($"\tpublic static readonly {className}Table Table = new {className}Table();");
             writer.Write("}");
             
             writer.WriteLine();

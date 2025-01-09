@@ -295,27 +295,40 @@ namespace DGExcel2Json_CSharp
                     EDataType dataType = GetDataType(valueTypes[i]);
                     switch (dataType)
                     {
-                        case EDataType.Int:
                         case EDataType.Bool:
+                            {
+                                var lower = datas[j, i].ToString().ToLower();
+                                writer.Write(lower);
+                                break;
+                            }
+                        case EDataType.Int:
                         case EDataType.Float:
-                            writer.Write(datas[j, i]);
-                            break;
+                            {
+                                writer.Write(datas[j, i]);
+                                break;
+                            }
                         case EDataType.String:
-                            writer.Write($"\"{datas[j, i]}\"");
-                            break;
+                            {
+                                writer.Write($"\"{datas[j, i]}\"");
+                                break;
+                            }
                         case EDataType.Vector3:
                         case EDataType.Color:
                         case EDataType.IntArray:
                         case EDataType.FloatArray:
                         case EDataType.ColorArray:
-                            writer.Write("[");
-                            writer.Write(datas[j, i]);
-                            writer.Write("]");
-                            break;
+                            {
+                                writer.Write("[");
+                                writer.Write(datas[j, i]);
+                                writer.Write("]");
+                                break;
+                            }
                         case EDataType.NOT_DEFINED:
-                            writer.Close();
-                            Console.WriteLine($"NOT DEFINED data type. {valueTypes[i]}");
-                            return EDGExcel2JsonResult.DATA_TYPE_NOT_DEFINED;
+                            {
+                                writer.Close();
+                                Console.WriteLine($"NOT DEFINED data type. {valueTypes[i]}");
+                                return EDGExcel2JsonResult.DATA_TYPE_NOT_DEFINED;
+                            }
                     }
 
                     // 마지막 열임

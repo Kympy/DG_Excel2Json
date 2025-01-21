@@ -303,6 +303,7 @@ namespace DGExcel2Json_CSharp
                             }
                         case EDataType.Int:
                         case EDataType.Float:
+                        case EDataType.Long:
                             {
                                 writer.Write(datas[j, i]);
                                 break;
@@ -365,6 +366,7 @@ namespace DGExcel2Json_CSharp
                 case "int": return EDataType.Int;
                 case "bool": return EDataType.Bool;
                 case "float": return EDataType.Float;
+                case "long": return EDataType.Long;
                 case "string": return EDataType.String;
                 case "vector3": return EDataType.Vector3;
                 case "int[]": return EDataType.IntArray;

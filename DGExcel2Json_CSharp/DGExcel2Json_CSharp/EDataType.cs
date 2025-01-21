@@ -8,6 +8,7 @@
         String,
         Vector3,
         Color,
+        Long,
         
         IntArray,
         FloatArray,

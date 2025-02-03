@@ -1,3 +1,4 @@
+#if UNITY_EDITOR
 using System;
 using System.Diagnostics;
 using System.IO;
@@ -9,20 +10,26 @@ namespace DGExcel2Json
 {
     public class DGExcel2Json : MonoBehaviour
     {
-#if UNITY_EDITOR
         private static string Plugins = "Plugins";
         private static string Root = "DGExcel2Json";
+        private static string RunFolder = "Build";
         private static string FILE = "DGExcel2Json_CSharp.exe";
 
-        //[MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
-        public static void GenerateRecompile() { Generate(true); }
+        [MenuItem("Tools/DGExcel2Json/Generate And ReCompile", priority = 1)]
+        public static void GenerateRecompile()
+        {
+            Generate(true);
+        }
 
         [MenuItem("Tools/DGExcel2Json/Generate Only", priority = 2)]
-        public static void GenerateNoCompile() { Generate(false); }
+        public static void GenerateNoCompile()
+        {
+            Generate(false);
+        }
 
         public static void Generate(bool bRecompile = false)
         {
-            string rootDir = Path.Combine(Application.dataPath, Plugins, Root);
+            string rootDir = Path.Combine(Application.dataPath, Plugins, Root, RunFolder);
             if (Directory.Exists(rootDir) == false)
             {
                 Directory.CreateDirectory(rootDir);
@@ -40,11 +47,21 @@ namespace DGExcel2Json
             startInfo.UseShellExecute = false;
             startInfo.CreateNoWindow = true;
             startInfo.Arguments = $"{CreateExcelFolder()} {CreateJsonFolder()} {CreateScriptFolder()} {CreateLoaderPath()}";
+            startInfo.RedirectStandardError = true;
+            startInfo.RedirectStandardOutput = true;
 
             try
             {
-                using (Process process = Process.Start(startInfo))
+                using (Process process = new Process())
                 {
+                    process.StartInfo = startInfo;
+                    process.OutputDataReceived += (sender, e) => Debug.Log($"Output : {e.Data}");
+                    process.ErrorDataReceived += (sender, e) => Debug.Log($"Error : {e.Data}");
+                    
+                    process.Start();
+                    process.BeginOutputReadLine();
+                    process.BeginErrorReadLine();
+                    
                     process.WaitForExit();
                     int exitCode = process.ExitCode;
                     if (exitCode != 0)
@@ -54,10 +71,9 @@ namespace DGExcel2Json
                     else
                     {
                         Debug.Log($"DG Excel2Json finished : Exit Code -> {exitCode}:{(EDGExcel2JsonResult)exitCode}");
+                        if (bRecompile)
+                            ReCompile();
                     }
-
-                    AssetDatabase.ImportAsset(GetJsonRelativePath(), ImportAssetOptions.ImportRecursive);
-                    if (bRecompile) ReCompile();
                 }
             }
             catch (Exception e)
@@ -80,7 +96,7 @@ namespace DGExcel2Json
             return excelPath;
         }
 
-        //[MenuItem("Tools/DGExcel2Json/Create json folder")]
+        [MenuItem("Tools/DGExcel2Json/Create json folder")]
         public static string CreateJsonFolder()
         {
             string jsonPath = Path.Combine(Application.dataPath, "Json");
@@ -92,12 +108,7 @@ namespace DGExcel2Json
             return jsonPath;
         }
 
-        private static string GetJsonRelativePath()
-        {
-            return "Assets/Json";
-        }
-        
-        //[MenuItem("Tools/DGExcel2Json/Create class script folder")]
+        [MenuItem("Tools/DGExcel2Json/Create class script folder")]
         public static string CreateScriptFolder()
         {
             string classPath = Path.Combine(Application.dataPath, "Scripts/DataClass");
@@ -121,7 +132,10 @@ namespace DGExcel2Json
         }
 
         [MenuItem("Tools/DGExcel2Json/Recompile", priority = 3)]
-        public static void ReCompile() { UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation(); }
-#endif
+        public static void ReCompile()
+        {
+            UnityEditor.Compilation.CompilationPipeline.RequestScriptCompilation();
+        }
     }
 }
+#endif

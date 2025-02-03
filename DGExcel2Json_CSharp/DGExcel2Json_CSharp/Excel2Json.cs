@@ -48,30 +48,38 @@ namespace DGExcel2Json_CSharp
             {
                 currentApp = new Microsoft.Office.Interop.Excel.Application();
                 currentWorkbook = currentApp.Workbooks.Open(file);
-                currentSheet = currentWorkbook.Worksheets.Item[1] as Worksheet;
+                var sheets = currentWorkbook.Worksheets;
+                currentSheet = sheets.Item[1] as Worksheet;
                 EDGExcel2JsonResult result = MakeJsonFile(file, outJsonPath, outScriptPath);
                 currentWorkbook.Close();
                 currentApp.Quit();
                 if (currentSheet != null)
                 {
-                    // Marshal.ReleaseComObject(currentSheet);
                     Marshal.FinalReleaseComObject(currentSheet);
+                }
+                if (sheets != null)
+                {
+                    Marshal.FinalReleaseComObject(sheets);
                 }
 
                 if (currentWorkbook != null)
                 {
-                    // Marshal.ReleaseComObject(currentWorkbook);
                     Marshal.FinalReleaseComObject(currentWorkbook);
                 }
 
                 if (currentApp != null)
                 {
-                    // Marshal.ReleaseComObject(currentApp);
                     Marshal.FinalReleaseComObject(currentApp);
                 }
 
-                if (result != EDGExcel2JsonResult.SUCCESS) return result;
-                
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                if (result != EDGExcel2JsonResult.SUCCESS)
+                {
+                    return result;
+                }
+
                 fileNames.Add(Path.GetFileNameWithoutExtension(file));
             }
 
@@ -121,13 +129,19 @@ namespace DGExcel2Json_CSharp
             {
                 currentApp = new Microsoft.Office.Interop.Excel.Application();
                 currentWorkbook = currentApp.Workbooks.Open(file);
-                currentSheet = currentWorkbook.Worksheets.Item[1] as Worksheet;
+                var sheets = currentWorkbook.Worksheets;
+                currentSheet = sheets.Item[1] as Worksheet;
                 EDGExcel2JsonResult result = MakeJsonFile(file, outJsonPath, null);
-                currentWorkbook.Close();
+
+                currentWorkbook.Close(false);
                 currentApp.Quit();
                 if (currentSheet != null)
                 {
                     Marshal.FinalReleaseComObject(currentSheet);
+                }
+                if (sheets != null)
+                {
+                    Marshal.FinalReleaseComObject(sheets);
                 }
 
                 if (currentWorkbook != null)
@@ -140,12 +154,19 @@ namespace DGExcel2Json_CSharp
                     Marshal.FinalReleaseComObject(currentApp);
                 }
 
-                if (result != EDGExcel2JsonResult.SUCCESS) return result;
+                GC.Collect();
+                GC.WaitForPendingFinalizers();
+
+                if (result != EDGExcel2JsonResult.SUCCESS)
+                {
+                    return result;
+                }
                 
                 fileNames.Add(Path.GetFileNameWithoutExtension(file));
             }
 
             GC.Collect();
+            GC.WaitForPendingFinalizers();
             return EDGExcel2JsonResult.SUCCESS;
         }
 
@@ -318,6 +339,7 @@ namespace DGExcel2Json_CSharp
                         case EDataType.IntArray:
                         case EDataType.FloatArray:
                         case EDataType.ColorArray:
+                        case EDataType.StringArray:
                             {
                                 writer.Write("[");
                                 writer.Write(datas[j, i]);
@@ -373,6 +395,7 @@ namespace DGExcel2Json_CSharp
                 case "float[]": return EDataType.FloatArray;
                 case "color" : return EDataType.Color;
                 case "color[]" : return EDataType.ColorArray;
+                case "string[]": return EDataType.StringArray;
                 
                 default: return EDataType.NOT_DEFINED;
             }
